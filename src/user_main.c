@@ -25,11 +25,37 @@ bool ICACHE_FLASH_ATTR user_set_station_config(char *ssid, char *password)
     os_memcpy(&stationConf.ssid, ssid, os_strlen(ssid));
     os_memcpy(&stationConf.password, password, os_strlen(password));
 
-    s_printf("%s\n\r", __FUNCTION__);
+    os_printf("%s\n\r", __FUNCTION__);
     return wifi_station_set_config(&stationConf);
 }
 
-//Init function 
+void wifi_handle_event_cb(System_Event_t *evt)
+{
+    switch (evt->event)
+    {
+        case EVENT_STAMODE_CONNECTED:
+        os_printf("connect to ssid %s, channel %d\n", evt->event_info.connected.ssid, evt->event_info.connected.channel);
+        break;
+
+        case EVENT_STAMODE_DISCONNECTED:
+        os_printf("disconnect from ssid %s, reason %d\n", evt->event_info.disconnected.ssid, evt->event_info.disconnected.reason);
+        break;
+
+        case EVENT_STAMODE_AUTHMODE_CHANGE:
+        os_printf("authmode change: %d -> %d\n", evt->event_info.auth_change.old_mode, evt->event_info.auth_change.new_mode);
+        break;
+
+        case EVENT_STAMODE_GOT_IP:
+        os_printf("got ip:" IPSTR ", mask:" IPSTR ", gw:" IPSTR, IP2STR(&evt->event_info.got_ip.ip),
+                  IP2STR(&evt->event_info.got_ip.mask), IP2STR(&evt->event_info.got_ip.gw));
+        os_printf("\n");
+        break;
+
+        default:
+        break;
+    }
+}
+
 void ICACHE_FLASH_ATTR user_init()
 {
     uart_div_modify(0, UART_CLK_FREQ / (UART_SPEED));
@@ -40,6 +66,8 @@ void ICACHE_FLASH_ATTR user_init()
     // user_set_station_config(WIFI_SSID, WIFI_PASSWORD);
 
     //Start os task
-    system_os_task (loop, user_procTaskPrio,user_procTaskQueue, user_procTaskQueueLen);
-    system_os_post (user_procTaskPrio, 0, 0 );
+    // system_os_task (loop, user_procTaskPrio,user_procTaskQueue, user_procTaskQueueLen);
+    // system_os_post (user_procTaskPrio, 0, 0 );
+
+    wifi_set_event_handler_cb (wifi_handle_event_cb);
 }
