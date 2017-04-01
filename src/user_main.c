@@ -3,6 +3,7 @@
 #include "gpio.h"
 #include "os_type.h"
 #include "user_interface.h"
+#include "user_config.h"
 
 #define user_procTaskPrio        0
 #define user_procTaskQueueLen    1
@@ -29,6 +30,19 @@ bool ICACHE_FLASH_ATTR user_set_station_config(char *ssid, char *password)
     return wifi_station_set_config(&stationConf);
 }
 
+LOCAL void ICACHE_FLASH_ATTR host_ip_found (const char *name, ip_addr_t *ipaddr, void *arg)
+{
+    struct espconn *pespconn = (struct espconn *)arg;
+    if (ipaddr == NULL)
+    {
+        os_printf("Unable to find IP for %s\nDisconnecting wifi\n", THINGSPEAK_HOST);
+        wifi_station_disconnect();
+    }
+
+    os_printf("host %s found %d.%d.%d.%d\n", THINGSPEAK_HOST, *((uint8 *)&ipaddr->addr), *((uint8 *)&ipaddr->addr + 1),
+             *((uint8 *)&ipaddr->addr + 2), *((uint8 *)&ipaddr->addr + 3));
+}
+
 void wifi_handle_event_cb(System_Event_t *evt)
 {
     switch (evt->event)
@@ -46,12 +60,11 @@ void wifi_handle_event_cb(System_Event_t *evt)
         break;
 
         case EVENT_STAMODE_GOT_IP:
-        os_printf("got ip:" IPSTR ", mask:" IPSTR ", gw:" IPSTR, IP2STR(&evt->event_info.got_ip.ip),
-                  IP2STR(&evt->event_info.got_ip.mask), IP2STR(&evt->event_info.got_ip.gw));
-        os_printf("\n");
+        espconn_gethostbyname (&thingspeak_connection, THINGSPEAK_HOST, &thingspeak_ip, host_ip_found);
         break;
 
         default:
+        os_printf("Unknown event: %x", evt->event);
         break;
     }
 }
