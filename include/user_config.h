@@ -11,6 +11,7 @@
 
 struct espconn thingspeak_connection;
 ip_addr_t thingspeak_ip;
+esp_tcp thingspeak_tcp;
 
 #define THINGSPEAK_HOST "thingspeak.com"
 

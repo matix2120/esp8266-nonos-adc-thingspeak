@@ -30,9 +30,18 @@ bool ICACHE_FLASH_ATTR user_set_station_config(char *ssid, char *password)
     return wifi_station_set_config(&stationConf);
 }
 
+void ICACHE_FLASH_ATTR tcp_connected (void *arg)
+{
+    os_printf ("Connected to: %s\n", THINGSPEAK_HOST);
+}
+
+void ICACHE_FLASH_ATTR tcp_disconnected (void *arg)
+{
+    os_printf ("Disconnected from: %s\n", THINGSPEAK_HOST);
+}
+
 LOCAL void ICACHE_FLASH_ATTR host_ip_found (const char *name, ip_addr_t *ipaddr, void *arg)
 {
-    struct espconn *pespconn = (struct espconn *)arg;
     if (ipaddr == NULL)
     {
         os_printf("Unable to find IP for %s\nDisconnecting wifi\n", THINGSPEAK_HOST);
@@ -41,6 +50,24 @@ LOCAL void ICACHE_FLASH_ATTR host_ip_found (const char *name, ip_addr_t *ipaddr,
 
     os_printf("host %s found %d.%d.%d.%d\n", THINGSPEAK_HOST, *((uint8 *)&ipaddr->addr), *((uint8 *)&ipaddr->addr + 1),
              *((uint8 *)&ipaddr->addr + 2), *((uint8 *)&ipaddr->addr + 3));
+
+    struct espconn *pespconn = (struct espconn *)arg;
+    pespconn->type = ESPCONN_TCP;
+    pespconn->state = ESPCONN_NONE;
+    pespconn->proto.tcp=&thingspeak_tcp;
+    pespconn->proto.tcp->local_port = espconn_port();
+    pespconn->proto.tcp->remote_port = 80;
+    os_memcpy (pespconn->proto.tcp->remote_ip, &ipaddr->addr, 4);
+
+    espconn_regist_connectcb (pespconn, tcp_connected);
+    espconn_regist_disconcb (pespconn, tcp_disconnected);
+
+    if (espconn_connect (pespconn) != ESPCONN_OK)
+    {
+        os_printf("Unable to connect to %s\nDisconnecting wifi\n", THINGSPEAK_HOST);
+        wifi_station_disconnect();
+    }
+
 }
 
 void wifi_handle_event_cb(System_Event_t *evt)
