@@ -30,9 +30,16 @@ bool ICACHE_FLASH_ATTR user_set_station_config(char *ssid, char *password)
     return wifi_station_set_config(&stationConf);
 }
 
+void ICACHE_FLASH_ATTR data_received (void *arg, char *pdata, unsigned short len)
+{
+    os_printf("Received %d bytes: %s", len, pdata);
+}
+
 void ICACHE_FLASH_ATTR tcp_connected (void *arg)
 {
     os_printf ("Connected to: %s\n", THINGSPEAK_HOST);
+
+    espconn_regist_recvcb (&thingspeak_connection, data_received); 
 }
 
 void ICACHE_FLASH_ATTR tcp_disconnected (void *arg)
