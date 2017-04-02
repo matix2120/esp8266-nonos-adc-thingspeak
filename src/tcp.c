@@ -1,3 +1,4 @@
+#include "adc.h"
 #include "osapi.h"
 #include "tcp.h"
 
@@ -49,12 +50,11 @@ void ICACHE_FLASH_ATTR tcp_connected(void *arg)
 
     espconn_regist_recvcb(&thingspeak_connection, data_received); 
 
-    static int temperature = 20;   // test data
     struct espconn *conn = arg;
 	char buffer[256];
 	char value_buf[100];
 
-	os_sprintf(value_buf, "field1=%d\r\n", temperature);
+	os_sprintf(value_buf, "field1=%d\r\n", soil_moisture);
     os_sprintf(buffer, "POST /update HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nX-THINGSPEAKAPIKEY: %s\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: %d\r\n\r\n%s",
 			   THINGSPEAK_HOST, THINGSPEAK_API_KEY, os_strlen(value_buf), value_buf);
 
@@ -62,13 +62,12 @@ void ICACHE_FLASH_ATTR tcp_connected(void *arg)
 
     if(result == ESPCONN_OK)
     {
-		os_printf("Sent value: %d\n", temperature);
+		os_printf("Sent value: %d\n", soil_moisture);
 	}
 	else
 	{
 		os_printf("Send error: %d\n", result);
 	}
-    temperature++;
 }
 
 void ICACHE_FLASH_ATTR tcp_disconnected(void *arg)
