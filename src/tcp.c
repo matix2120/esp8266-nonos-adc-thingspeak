@@ -37,7 +37,10 @@ void ICACHE_FLASH_ATTR get_thingspeak_ip()
 
 static void ICACHE_FLASH_ATTR data_received(void *arg, char *pdata, unsigned short len)
 {
-    os_printf("Received %d bytes: %s", len, pdata);
+	struct espconn *conn = arg;
+	char *status = strstr(pdata, "Status");
+	os_printf("Received %d bytes\n%s\n", len, strtok(status, "\r"));
+	espconn_disconnect(conn);
 }
 
 void ICACHE_FLASH_ATTR tcp_connected(void *arg)
@@ -45,6 +48,27 @@ void ICACHE_FLASH_ATTR tcp_connected(void *arg)
     os_printf("Connected to: %s\n", THINGSPEAK_HOST);
 
     espconn_regist_recvcb(&thingspeak_connection, data_received); 
+
+    static int temperature = 20;   // test data
+    struct espconn *conn = arg;
+	char buffer[256];
+	char value_buf[100];
+
+	os_sprintf(value_buf, "field1=%d\r\n", temperature);
+    os_sprintf(buffer, "POST /update HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nX-THINGSPEAKAPIKEY: %s\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: %d\r\n\r\n%s",
+			   THINGSPEAK_HOST, THINGSPEAK_API_KEY, os_strlen(value_buf), value_buf);
+
+    int result = espconn_send(conn, buffer, os_strlen(buffer));
+
+    if(result == ESPCONN_OK)
+    {
+		os_printf("Sent value: %d\n", temperature);
+	}
+	else
+	{
+		os_printf("Send error: %d\n", result);
+	}
+    temperature++;
 }
 
 void ICACHE_FLASH_ATTR tcp_disconnected(void *arg)
