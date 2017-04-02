@@ -1,3 +1,7 @@
+/* Created by matix21
+ * MIT License
+ */
+
 #ifndef TCP_H
 #define TCP_H
 

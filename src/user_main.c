@@ -1,3 +1,8 @@
+/* Created by matix21
+ * MIT License
+ */
+
+
 #include "adc.h"
 #include "ets_sys.h"
 #include "gpio.h"

@@ -1,3 +1,7 @@
+/* Created by matix21
+ * MIT License
+ */
+
 #include "adc.h"
 #include "osapi.h"
 #include "tcp.h"

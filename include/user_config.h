@@ -1,3 +1,7 @@
+/* Created by matix21
+ * MIT License
+ */
+
 #ifndef USER_CONFIG_H
 #define USER_CONFIG_H
 

@@ -1,3 +1,7 @@
+/* Created by matix21
+ * MIT License
+ */
+
 #ifndef WIFI_H
 #define WIFI_H
 

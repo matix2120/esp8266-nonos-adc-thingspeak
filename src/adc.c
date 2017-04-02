@@ -1,3 +1,7 @@
+/* Created by matix21
+ * MIT License
+ */
+
 #include "adc.h"
 #include "user_interface.h"
 
