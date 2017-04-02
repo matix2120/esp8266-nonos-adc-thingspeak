@@ -74,4 +74,5 @@ void ICACHE_FLASH_ATTR tcp_connected(void *arg)
 void ICACHE_FLASH_ATTR tcp_disconnected(void *arg)
 {
     os_printf("Disconnected from: %s\n", THINGSPEAK_HOST);
+    wifi_station_disconnect();
 }

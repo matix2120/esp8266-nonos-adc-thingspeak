@@ -13,6 +13,8 @@ void wifi_handle_event_cb(System_Event_t *evt)
 
         case EVENT_STAMODE_DISCONNECTED:
         os_printf("disconnect from ssid %s, reason %d\n", evt->event_info.disconnected.ssid, evt->event_info.disconnected.reason);
+        system_deep_sleep_set_option(0);
+        system_deep_sleep( 60 * 1000 * 1000 );  // 60 seconds
         break;
 
         case EVENT_STAMODE_AUTHMODE_CHANGE:
