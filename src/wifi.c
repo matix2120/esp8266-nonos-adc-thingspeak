@@ -5,6 +5,7 @@
 #include "wifi.h"
 #include "tcp.h"
 #include "osapi.h"
+#include "user_config.h"
 
 
 void wifi_handle_event_cb(System_Event_t *evt)
@@ -18,7 +19,7 @@ void wifi_handle_event_cb(System_Event_t *evt)
         case EVENT_STAMODE_DISCONNECTED:
         os_printf("disconnect from ssid %s, reason %d\n", evt->event_info.disconnected.ssid, evt->event_info.disconnected.reason);
         system_deep_sleep_set_option(0);
-        system_deep_sleep( 60 * 1000 * 1000 );  // 60 seconds
+        system_deep_sleep(SLEEP_BETWEEN_MEASUREMENTS_US);
         break;
 
         case EVENT_STAMODE_AUTHMODE_CHANGE:
@@ -35,10 +36,10 @@ void wifi_handle_event_cb(System_Event_t *evt)
     }
 }
 
-bool ICACHE_FLASH_ATTR user_set_station_config()
+bool ICACHE_FLASH_ATTR user_set_station_config(void)
 {
     struct station_config stationConf;
-    stationConf.bssid_set = 0;      //need not check MAC address of AP
+    stationConf.bssid_set = 0; //no need to check MAC address of AP
 
     os_memset(&stationConf.ssid, 0, sizeof(stationConf.ssid));
     os_memset(&stationConf.password, 0, sizeof(stationConf.password));

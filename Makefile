@@ -25,7 +25,7 @@ SDK_BASE	?= /Volumes/case-sensitive/esp-open-sdk/sdk
 
 # esptool.py path and port
 ESPTOOL		?= esptool.py
-ESPPORT		?= /dev/cu.wchusbserial1420
+ESPPORT		?= /dev/cu.wchusbserial1410
 
 # name for the target project
 TARGET		= thingspeak
@@ -129,7 +129,7 @@ $(FW_BASE):
 	$(Q) mkdir -p $@
 
 flash: $(FW_FILE_1) $(FW_FILE_2)
-	$(ESPTOOL) --port $(ESPPORT) write_flash $(FW_FILE_1_ADDR) $(FW_FILE_1) $(FW_FILE_2_ADDR) $(FW_FILE_2)
+	$(ESPTOOL) --port $(ESPPORT) write_flash --flash_size 4m $(FW_FILE_1_ADDR) $(FW_FILE_1) $(FW_FILE_2_ADDR) $(FW_FILE_2)
 
 clean:
 	$(Q) rm -rf $(FW_BASE) $(BUILD_BASE)

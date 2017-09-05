@@ -2,9 +2,22 @@
  * MIT License
  */
 
-#include "adc.h"
+#include "measurements.h"
 #include "osapi.h"
 #include "tcp.h"
+
+static uint16_t ICACHE_FLASH_ATTR prepare_thingspeak_request(measurements *meas, char *buffer)
+{
+    char value_buf[100];
+
+    os_sprintf(value_buf, "field1=%d.%d&field2=%d.%d&field3=%d.%d&field4=%d.%d\r\n", (int)(meas->temp/100),(int)(meas->temp%100),
+        (int)(meas->hum/1024), (int)(meas->hum%1024), (int)(meas->press/100), (int)(meas->press%100), (int)(meas->voltage/100),
+        (int)(meas->voltage%100));
+    os_sprintf(buffer, "POST /update HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nX-THINGSPEAKAPIKEY: %s\r\nContent-Type: \
+        application/x-www-form-urlencoded\r\nContent-Length: %d\r\n\r\n%s", THINGSPEAK_HOST, THINGSPEAK_API_KEY, os_strlen(value_buf), value_buf);
+
+    return os_strlen(buffer);
+}
 
 static void ICACHE_FLASH_ATTR host_ip_found(const char *name, ip_addr_t *ipaddr, void *arg)
 {
@@ -37,41 +50,40 @@ static void ICACHE_FLASH_ATTR host_ip_found(const char *name, ip_addr_t *ipaddr,
 
 void ICACHE_FLASH_ATTR get_thingspeak_ip()
 {
-	espconn_gethostbyname (&thingspeak_connection, THINGSPEAK_HOST, &thingspeak_ip, host_ip_found);
+    espconn_gethostbyname (&thingspeak_connection, THINGSPEAK_HOST, &thingspeak_ip, host_ip_found);
 }
 
 static void ICACHE_FLASH_ATTR data_received(void *arg, char *pdata, unsigned short len)
 {
-	struct espconn *conn = arg;
-	char *status = strstr(pdata, "Status");
-	os_printf("Received %d bytes\n%s\n", len, strtok(status, "\r"));
-	espconn_disconnect(conn);
+    struct espconn *conn = arg;
+    char *status = strstr(pdata, "Status");
+    os_printf("Received %d bytes\n%s\n", len, strtok(status, "\r"));
+    espconn_disconnect(conn);
 }
 
 void ICACHE_FLASH_ATTR tcp_connected(void *arg)
 {
+    struct espconn *conn = arg;
+    measurements meas;
+    char buffer[512];
+
     os_printf("Connected to: %s\n", THINGSPEAK_HOST);
 
     espconn_regist_recvcb(&thingspeak_connection, data_received); 
+    BME280_readSensorData();
+    prepare_measurements(&meas);
 
-    struct espconn *conn = arg;
-	char buffer[256];
-	char value_buf[100];
-
-	os_sprintf(value_buf, "field1=%d\r\n", soil_moisture);
-    os_sprintf(buffer, "POST /update HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nX-THINGSPEAKAPIKEY: %s\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: %d\r\n\r\n%s",
-			   THINGSPEAK_HOST, THINGSPEAK_API_KEY, os_strlen(value_buf), value_buf);
-
-    int result = espconn_send(conn, buffer, os_strlen(buffer));
+    uint16_t request_len = prepare_thingspeak_request(&meas, buffer);
+    int result = espconn_send(conn, buffer, request_len);
 
     if(result == ESPCONN_OK)
     {
-		os_printf("Sent value: %d\n", soil_moisture);
-	}
-	else
-	{
-		os_printf("Send error: %d\n", result);
-	}
+        os_printf("%s", buffer);
+    }
+    else
+    {
+        os_printf("Send error: %d\r\n", result);
+    }
 }
 
 void ICACHE_FLASH_ATTR tcp_disconnected(void *arg)
