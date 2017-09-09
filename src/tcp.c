@@ -10,7 +10,7 @@ static uint16_t ICACHE_FLASH_ATTR prepare_thingspeak_request(measurements *meas,
 {
     char value_buf[100];
 
-    os_sprintf(value_buf, "field1=%d.%d&field2=%d.%d&field3=%d.%d&field4=%d.%d\r\n", (int)(meas->temp/100),(int)(meas->temp%100),
+    os_sprintf(value_buf, "field1=%d.%d&field2=%d.%d&field3=%d.%d&field4=%d.%02d\r\n", (int)(meas->temp/100),(int)(meas->temp%100),
         (int)(meas->hum/1024), (int)(meas->hum%1024), (int)(meas->press/100), (int)(meas->press%100), (int)(meas->voltage/100),
         (int)(meas->voltage%100));
     os_sprintf(buffer, "POST /update HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nX-THINGSPEAKAPIKEY: %s\r\nContent-Type: \
